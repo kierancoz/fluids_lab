@@ -99,7 +99,15 @@ def step_5(plot = False):
 
 # calculate Drag using control volume
 def step_7(up_v, down_v, up_p, down_p):
-    pass
+    with open('employee_file.csv', mode='w',newline="") as employee_file:
+        employee_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        position_up = lab_data.get("upstream_cv").get("positions")
+        position_down = lab_data.get("downstream_cv").get("positions")
+        for i in range(len(down_v)):
+            if i < len(up_v):
+                employee_writer.writerow([position_up[i], up_v[i], up_p[i], "", position_down[i], down_v[i], down_p[i]])
+            else:
+                employee_writer.writerow(["", "", "", "", position_down[i], down_v[i], down_p[i]])
 
 # # # helper functions # # #
 
@@ -107,6 +115,7 @@ def step_7(up_v, down_v, up_p, down_p):
 def cd(drag, speed):
     dynamic_voltage = lab_data.get("upstream_pressures").get(speed).get("voltage_dyn")
     area = lab_data.get("cylinder_data").get("length") * lab_data.get("cylinder_data").get("diameter")
+    print(voltage_to_pressure_func(dynamic_voltage))
     return drag / (voltage_to_pressure_func(dynamic_voltage) * area)
 
 avg = lambda a_list: sum(a_list)/len(a_list)
@@ -137,7 +146,7 @@ if __name__ == "__main__":
     up_p, down_p = step_5(plot = True)
 
     step_7(up_v, down_v, up_p, down_p)
-    cv_drag = 10 # get values from spreadsheet
+    cv_drag = 1.3377 # get values from spreadsheet
 
     print(cv_drag)
     cv_fast_cd = cd(cv_drag, "fast_speed")
