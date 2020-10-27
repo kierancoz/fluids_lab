@@ -41,7 +41,9 @@ def step_1(plot = False):
 
     y = inH2O_to_Pa(lab_data.get("manometer").get("manometer_height"))
     x = lab_data.get("manometer").get("voltage_readout")
-    voltage_to_pressure_func = np.poly1d(np.polyfit(x, y, 1)) 
+    z = np.polyfit(x,y,1)
+    print(z)
+    voltage_to_pressure_func = np.poly1d(z) 
 
     if plot:
         plt.plot(x,y, 'yo', x, voltage_to_pressure_func(x), '--k')
