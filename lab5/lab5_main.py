@@ -73,25 +73,34 @@ def main():
     v_to_p_small = v_to_p_func(lab_data.get("calibration_small"), plot = False)
     v_to_drag_small = v_to_f_func(lab_data.get("calibration_small_drag"), plot = False)
 
-    # get small sting information
-    sting_drag = get_forces(lab_data.get("small_camaro_alone"), v_to_drag_small)
-    sting_lift = None # just so it doesnt accidentally get used anywhere, resetting this value
+    # get sting information
+    sting_drag_func = lambda velocity: 0.0007 * velocity ** 2 - 0.0028 * velocity + 0.0544 # from lab handout
     sting_pressure = get_pressure(lab_data.get("small_camaro_alone"), v_to_p_small)
     sting_wind_velocities = [p_to_vel(x) for x in sting_pressure]
+    sting_drag = [sting_drag_func(x) for x in sting_wind_velocities]
+    sting_lift = None # just so it doesnt accidentally get used anywhere, resetting this value
 
-    # get forces for camaro for various USPS positions
-    camaro_f_drag = get_forces(lab_data.get("small_usps_front"), v_to_drag_small)
-    camaro_b_drag = get_forces(lab_data.get("small_usps_behind"), v_to_drag_small)
+    # get camaro alone drag
+    total_camaro_a_drag = get_forces(lab_data.get("small_camaro_alone"), v_to_drag_small)
+    camaro_a_drag = np.array(total_camaro_a_drag) - np.array(sting_drag)
+
+    # get drag for usps in front
+    total_camaro_f_drag = get_forces(lab_data.get("small_usps_front"), v_to_drag_small)
+    camaro_f_drag = np.array(total_camaro_f_drag) - np.array(sting_drag)
+
+    # get drag for usps behind
+    total_camaro_b_drag = get_forces(lab_data.get("small_usps_behind"), v_to_drag_small)
+    camaro_b_drag = np.array(total_camaro_b_drag) - np.array(sting_drag)
 
     # drag plots for camaro with different USPS positions
     # plot NOT correct rn - need to account for Dstring using provided equation
-    plot_forces("Drag", sting_wind_velocities, plot = False, just_camaro = sting_drag, usps_front = camaro_f_drag, usps_behind = camaro_b_drag)
+    plot_forces("Drag", sting_wind_velocities, plot = True, just_camaro = camaro_a_drag, usps_front = camaro_f_drag, usps_behind = camaro_b_drag)
 
     # reynolds number
     camaro_rn = [reynold_number(vel, 0.0554) for vel in sting_wind_velocities]
 
     # c_d calcs
-    justcamaro_c_d = [force_coefficient(x, 0.00206, sting_pressure[i]) for i, x in enumerate(sting_drag)]
+    justcamaro_c_d = [force_coefficient(x, 0.00206, sting_pressure[i]) for i, x in enumerate(camaro_a_drag)]
     uspsfront_c_d = [force_coefficient(x, 0.00206, sting_pressure[i]) for i, x in enumerate(camaro_f_drag)]
     uspsbehind_c_d = [force_coefficient(x, 0.00206, sting_pressure[i]) for i, x in enumerate(camaro_b_drag)]
     
@@ -166,8 +175,8 @@ def v_to_f_func(data, plot = False):
     # converts kg to newtons
     kg_to_N = lambda mass_list: [float(x) * 9.81 for x in mass_list]
 
-    x = [float(x) for x in list(data.keys())]
-    y = kg_to_N(list(data.values()))
+    y = kg_to_N(data.keys())
+    x = [float(x) for x in data.values()]
     z = np.polyfit(x,y,1)
     #print("Fit coefficients :", z)
     voltage_to_force_func = np.poly1d(z) 
