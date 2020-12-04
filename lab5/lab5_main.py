@@ -92,6 +92,12 @@ def main():
     total_camaro_b_drag = get_forces(lab_data.get("small_usps_behind"), v_to_drag_small)
     camaro_b_drag = np.array(total_camaro_b_drag) - np.array(sting_drag)
 
+    # zero drag forces
+    zero_forces = lambda forces, zero : [x - zero for x in forces]
+    camaro_a_drag = zero_forces(camaro_a_drag, camaro_a_drag[0])
+    camaro_f_drag = zero_forces(camaro_f_drag, camaro_f_drag[0])
+    camaro_b_drag = zero_forces(camaro_b_drag, camaro_b_drag[0])
+
     # drag plots for camaro with different USPS positions
     # plot NOT correct rn - need to account for Dstring using provided equation
     plot_forces("Drag", sting_wind_velocities, plot = True, just_camaro = camaro_a_drag, usps_front = camaro_f_drag, usps_behind = camaro_b_drag)
@@ -147,6 +153,10 @@ def get_forces(data, drag_v_to_f, lift_v_to_f = None):
     lift_index = data.get("categories").index("lift")
     total_lift_voltages = [(key, val[lift_index]) for key, val in data.items() if key != "categories"]
     total_lift_forces = [lift_v_to_f(x[1]) for x in total_lift_voltages]
+
+    # zero lift forces
+    lift_force_zero = total_lift_forces[0]
+    total_lift_forces = [x - lift_force_zero for x in total_lift_forces]
 
     return total_drag_forces, total_lift_forces
 
